@@ -1,0 +1,19 @@
+{
+  "name": "gitcontri-graph-cliui",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "CLI tool which display github contribution graph on the terminal",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@inquirer/prompts": "^2.3.0",
+    "chalk": "^5.3.0",
+    "dotenv": "^16.3.1",
+    "got": "^13.0.0",
+    "nanospinner": "^1.1.0"
+  }
+}
