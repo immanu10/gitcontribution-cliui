@@ -5,7 +5,21 @@ import got from "got";
 import { createSpinner } from "nanospinner";
 
 const gqlEndpoint = "https://api.github.com/graphql";
-const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"];
+const monthsOfYear = [
+  "J",
+  "F",
+  "M",
+  "A",
+  "M",
+  "J",
+  "J",
+  "A",
+  "S",
+  "O",
+  "N",
+  "D",
+];
 
 function heatMapColor(level) {
   const CL = {
@@ -59,10 +73,48 @@ function createEmptyGrid(numRows, numCols) {
 
 function createCommitHeatMap(data) {
   let res = "";
-  console.log(createEmptyGrid(1, data.weeks.length + 2));
-  daysOfWeek.forEach((_, i) => {
+
+  const tempWeeks = data.weeks.map((week) => {
+    return {
+      contributionDays: week.contributionDays.map((day) => ({
+        ...day,
+        dayIndex: new Date(day.date).getDay(),
+      })),
+    };
+  });
+  const weeks = tempWeeks.map((week) => {
+    const contributionDays = week.contributionDays;
+    const existingDayIndexes = contributionDays.map((day) => day.dayIndex);
+
+    for (let dayIndex = 0; dayIndex <= 6; dayIndex++) {
+      if (!existingDayIndexes.includes(dayIndex)) {
+        contributionDays.push({
+          dayIndex: dayIndex,
+        });
+      }
+    }
+    contributionDays.sort((a, b) => {
+      return a.dayIndex - b.dayIndex;
+    });
+
+    return week;
+  });
+
+  console.log(createEmptyGrid(1, data.weeks.length + 3));
+  let monthLable = "    ";
+  let lastMonth;
+  data.weeks.forEach((data, i) => {
+    const month = new Date(data.contributionDays[0]?.date).getMonth();
+    if (lastMonth !== month) monthLable += monthsOfYear[month] + " ";
+    else monthLable += createBox();
+    lastMonth = month;
+  });
+  console.log(chalk.bgBlack(monthLable + "  "));
+
+  daysOfWeek.forEach((day, i) => {
     res += createBox();
-    data.weeks.forEach((data) => {
+    res += chalk.bgBlack(day + " ");
+    weeks.forEach((data) => {
       res += createBox(
         heatMapColor(data.contributionDays[i]?.contributionLevel)
       );
@@ -72,7 +124,7 @@ function createCommitHeatMap(data) {
   });
 
   console.log(res);
-  console.log(createEmptyGrid(1, data.weeks.length + 2));
+  console.log(createEmptyGrid(1, data.weeks.length + 3));
 }
 
 async function init() {
@@ -86,6 +138,9 @@ async function init() {
             totalContributions
                 weeks {
                     contributionDays {
+                        contributionCount
+                        date
+                        color
                         contributionLevel
                     }
                 }
@@ -126,7 +181,7 @@ async function init() {
 
 await init();
 
-// query variable formate for filter by year
+// query variable formate if you want to filter by year
 const qv = {
   from: "2023-01-01T00:00:00.000Z",
   to: "2023-12-31T00:00:00.000Z",
